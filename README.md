@@ -286,7 +286,8 @@ Railway offers a simple deployment experience with built-in PostgreSQL. Follow t
 3. Select **"Deploy from GitHub repo"**
 4. Connect your GitHub account if not already connected
 5. Select the **rowdogz/ABCO** repository
-6. Railway will detect the Next.js app and start building
+6. **Important**: In the deployment settings, select **"Dockerfile"** as the builder (not Nixpacks)
+7. Railway will build using the included Dockerfile
 
 #### Step 2: Add PostgreSQL Database
 
@@ -340,10 +341,14 @@ The seed endpoint is idempotent and safe to run multiple times. It returns a JSO
 #### Railway Configuration
 
 The app includes a `railway.json` configuration file that:
-- Uses Nixpacks builder (auto-detected)
-- Runs `prisma migrate deploy` before starting the app
+- Uses Dockerfile builder (multi-stage build with Node 20)
+- Runs `prisma migrate deploy` on container startup
 - Configures health check at `/api/health`
 - Sets restart policy on failure
+
+The Dockerfile uses a multi-stage build for optimal image size:
+- Build stage: installs dependencies, generates Prisma client, builds Next.js
+- Runtime stage: runs the standalone Next.js server with Prisma migrations
 
 #### Troubleshooting Railway
 
@@ -359,8 +364,9 @@ The app includes a `railway.json` configuration file that:
 
 **Build fails:**
 - Check build logs in Railway dashboard
-- Ensure all dependencies are in `package.json`
-- Verify Node.js version compatibility (18+)
+- Ensure **Dockerfile** builder is selected (not Nixpacks)
+- Verify all dependencies are in `package.json`
+- Node.js 20+ is required (handled by Dockerfile)
 
 ### Alternative Hosted PostgreSQL Providers
 
