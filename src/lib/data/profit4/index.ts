@@ -3,5 +3,6 @@ export {
   Profit4StockRepository, 
   Profit4OrderRepository, 
   Profit4DepoRepository,
-  Profit4MetricsRepository
+  Profit4MetricsRepository,
+  Profit4AuditLogRepository
 } from './repositories'

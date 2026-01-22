@@ -3,14 +3,17 @@ import type {
   StockRepository, 
   OrderRepository, 
   DepoRepository,
-  MetricsRepository
+  MetricsRepository,
+  AuditLogRepository,
+  AuditLogFilters
 } from '@/lib/domain/repository'
 import type { 
   Product, 
   DepotStock, 
   Order, 
   Depo, 
-  DashboardMetrics 
+  DashboardMetrics,
+  AuditLog
 } from '@/lib/domain/types'
 import { 
   validateProducts, 
@@ -18,9 +21,13 @@ import {
   validateDepotStocks, 
   validateOrders, 
   validateDepos,
-  validateDashboardMetrics
+  validateDashboardMetrics,
+  validateAuditLog,
+  validateAuditLogs
 } from '@/lib/domain/types'
 import { mockProducts, mockStockLevels, mockOrders, mockDepos, mockStockChecks } from './data'
+import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 const productState = [...mockProducts]
 
@@ -141,5 +148,68 @@ export class MockMetricsRepository implements MetricsRepository {
     }
     
     return validateDashboardMetrics(metrics)
+  }
+}
+
+export class MockAuditLogRepository implements AuditLogRepository {
+  async create(entry: Omit<AuditLog, 'id' | 'createdAt'>): Promise<AuditLog> {
+    const record = await prisma.auditLog.create({
+      data: {
+        actorUserId: entry.actorUserId,
+        actorRole: entry.actorRole,
+        actionType: entry.actionType,
+        entityType: entry.entityType,
+        entityId: entry.entityId,
+        oldValue: entry.oldValue ?? undefined,
+        newValue: entry.newValue ?? undefined
+      }
+    })
+    
+    return validateAuditLog({
+      id: record.id,
+      actorUserId: record.actorUserId,
+      actorRole: record.actorRole,
+      actionType: record.actionType,
+      entityType: record.entityType,
+      entityId: record.entityId,
+      oldValue: record.oldValue,
+      newValue: record.newValue,
+      createdAt: record.createdAt.toISOString()
+    })
+  }
+
+  async fetchAll(filters?: AuditLogFilters): Promise<AuditLog[]> {
+    const where: Prisma.AuditLogWhereInput = {}
+    
+    if (filters?.actionType) {
+      where.actionType = filters.actionType
+    }
+    
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {}
+      if (filters.startDate) {
+        where.createdAt.gte = filters.startDate
+      }
+      if (filters.endDate) {
+        where.createdAt.lte = filters.endDate
+      }
+    }
+    
+    const records = await prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    return validateAuditLogs(records.map(record => ({
+      id: record.id,
+      actorUserId: record.actorUserId,
+      actorRole: record.actorRole,
+      actionType: record.actionType,
+      entityType: record.entityType,
+      entityId: record.entityId,
+      oldValue: record.oldValue,
+      newValue: record.newValue,
+      createdAt: record.createdAt.toISOString()
+    })))
   }
 }

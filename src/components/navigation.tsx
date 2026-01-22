@@ -12,7 +12,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/products', label: 'Products', icon: Package },
   { href: '/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/stock-check', label: 'Stock Check', icon: ClipboardList },
+  { href: '/audit', label: 'Audit Log', icon: FileText, opsOnly: true },
   { href: '/admin/graphql', label: 'GraphQL Admin', icon: Settings },
 ]
 
@@ -44,7 +46,9 @@ export function Navigation() {
           </div>
 
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
+            {navItems
+              .filter(item => !item.opsOnly || session?.user?.role === 'ops')
+              .map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (
@@ -99,7 +103,9 @@ export function Navigation() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-700">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {navItems.map((item) => {
+            {navItems
+              .filter(item => !item.opsOnly || session?.user?.role === 'ops')
+              .map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               return (

@@ -4,6 +4,7 @@ import type {
   OrderRepository, 
   DepoRepository,
   MetricsRepository,
+  AuditLogRepository,
   DataRepositories
 } from '@/lib/domain/repository'
 import { 
@@ -11,14 +12,16 @@ import {
   MockStockRepository, 
   MockOrderRepository, 
   MockDepoRepository,
-  MockMetricsRepository
+  MockMetricsRepository,
+  MockAuditLogRepository
 } from './mock'
 import { 
   Profit4ProductRepository, 
   Profit4StockRepository, 
   Profit4OrderRepository, 
   Profit4DepoRepository,
-  Profit4MetricsRepository
+  Profit4MetricsRepository,
+  Profit4AuditLogRepository
 } from './profit4'
 
 export type DataBackend = 'mock' | 'profit4'
@@ -82,6 +85,16 @@ function createMetricsRepository(backend: DataBackend): MetricsRepository {
   }
 }
 
+function createAuditLogRepository(backend: DataBackend): AuditLogRepository {
+  switch (backend) {
+    case 'profit4':
+      return new Profit4AuditLogRepository()
+    case 'mock':
+    default:
+      return new MockAuditLogRepository()
+  }
+}
+
 let repositoriesInstance: DataRepositories | null = null
 
 export function getRepositories(): DataRepositories {
@@ -93,7 +106,8 @@ export function getRepositories(): DataRepositories {
       orders: createOrderRepository(backend),
       depos: createDepoRepository(backend),
       stockChecks: null as never,
-      metrics: createMetricsRepository(backend)
+      metrics: createMetricsRepository(backend),
+      auditLogs: createAuditLogRepository(backend)
     }
   }
   return repositoriesInstance
@@ -117,6 +131,10 @@ export function getDepoRepository(): DepoRepository {
 
 export function getMetricsRepository(): MetricsRepository {
   return getRepositories().metrics
+}
+
+export function getAuditLogRepository(): AuditLogRepository {
+  return getRepositories().auditLogs
 }
 
 export { type DataRepositories } from '@/lib/domain/repository'

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { mockDepos } from '@/lib/mock-data'
+import { createAuditLog } from '@/lib/data-service'
 
 export async function GET() {
   try {
@@ -65,6 +66,19 @@ export async function POST(request: NextRequest) {
     })
 
     const depo = mockDepos.find(d => d.id === depoId)
+
+    await createAuditLog({
+      actorUserId: session.user.id,
+      actorRole: session.user.role,
+      actionType: 'STOCKCHECK_CREATED',
+      entityType: 'StockCheck',
+      entityId: stockCheck.id,
+      oldValue: null,
+      newValue: {
+        depoId: stockCheck.depoId,
+        depoName: depo?.name || depoId
+      }
+    })
 
     return NextResponse.json({
       id: stockCheck.id,

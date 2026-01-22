@@ -3,5 +3,6 @@ export {
   MockStockRepository, 
   MockOrderRepository, 
   MockDepoRepository,
-  MockMetricsRepository
+  MockMetricsRepository,
+  MockAuditLogRepository
 } from './repositories'

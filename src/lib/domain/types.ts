@@ -86,6 +86,25 @@ export const DashboardMetricsSchema = z.object({
   stockCheckVarianceCost: z.number()
 })
 
+export const AuditActionTypeSchema = z.enum([
+  'PRICE_APPROVED',
+  'PRICE_REJECTED',
+  'STOCKCHECK_CREATED',
+  'MINMAX_UPDATED'
+])
+
+export const AuditLogSchema = z.object({
+  id: z.string(),
+  actorUserId: z.string(),
+  actorRole: z.string(),
+  actionType: AuditActionTypeSchema,
+  entityType: z.string(),
+  entityId: z.string(),
+  oldValue: z.unknown().nullable(),
+  newValue: z.unknown().nullable(),
+  createdAt: z.string()
+})
+
 export type Depo = z.infer<typeof DepoSchema>
 export type Product = z.infer<typeof ProductSchema>
 export type DepotStock = z.infer<typeof DepotStockSchema>
@@ -94,6 +113,8 @@ export type Order = z.infer<typeof OrderSchema>
 export type StockCheckLine = z.infer<typeof StockCheckLineSchema>
 export type StockCheck = z.infer<typeof StockCheckSchema>
 export type DashboardMetrics = z.infer<typeof DashboardMetricsSchema>
+export type AuditActionType = z.infer<typeof AuditActionTypeSchema>
+export type AuditLog = z.infer<typeof AuditLogSchema>
 
 export function validateProduct(data: unknown): Product {
   return ProductSchema.parse(data)
@@ -137,4 +158,12 @@ export function validateStockChecks(data: unknown): StockCheck[] {
 
 export function validateDashboardMetrics(data: unknown): DashboardMetrics {
   return DashboardMetricsSchema.parse(data)
+}
+
+export function validateAuditLog(data: unknown): AuditLog {
+  return AuditLogSchema.parse(data)
+}
+
+export function validateAuditLogs(data: unknown): AuditLog[] {
+  return z.array(AuditLogSchema).parse(data)
 }

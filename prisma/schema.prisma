@@ -40,3 +40,26 @@ model StockCheckLine {
   unitCostSnapshot Float
   stockCheck       StockCheck @relation(fields: [stockCheckId], references: [id], onDelete: Cascade)
 }
+
+enum AuditActionType {
+  PRICE_APPROVED
+  PRICE_REJECTED
+  STOCKCHECK_CREATED
+  MINMAX_UPDATED
+}
+
+model AuditLog {
+  id          String          @id @default(cuid())
+  actorUserId String
+  actorRole   String
+  actionType  AuditActionType
+  entityType  String
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([actionType])
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}

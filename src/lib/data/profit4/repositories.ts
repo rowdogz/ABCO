@@ -3,14 +3,17 @@ import type {
   StockRepository, 
   OrderRepository, 
   DepoRepository,
-  MetricsRepository
+  MetricsRepository,
+  AuditLogRepository,
+  AuditLogFilters
 } from '@/lib/domain/repository'
 import type { 
   Product, 
   DepotStock, 
   Order, 
   Depo, 
-  DashboardMetrics 
+  DashboardMetrics,
+  AuditLog
 } from '@/lib/domain/types'
 
 const NOT_CONFIGURED_ERROR = 'Profit4 GraphQL backend is not configured. Please set up the PROFIT4_GRAPHQL_URL and PROFIT4_API_KEY environment variables.'
@@ -69,6 +72,16 @@ export class Profit4DepoRepository implements DepoRepository {
 
 export class Profit4MetricsRepository implements MetricsRepository {
   async fetchDashboardMetrics(): Promise<DashboardMetrics> {
+    throw new Error(NOT_CONFIGURED_ERROR)
+  }
+}
+
+export class Profit4AuditLogRepository implements AuditLogRepository {
+  async create(_entry: Omit<AuditLog, 'id' | 'createdAt'>): Promise<AuditLog> {
+    throw new Error(NOT_CONFIGURED_ERROR)
+  }
+
+  async fetchAll(_filters?: AuditLogFilters): Promise<AuditLog[]> {
     throw new Error(NOT_CONFIGURED_ERROR)
   }
 }

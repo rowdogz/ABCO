@@ -1,10 +1,12 @@
-import type { Product, DepotStock, Order, Depo, DashboardMetrics } from '@/lib/domain/types'
+import type { Product, DepotStock, Order, Depo, DashboardMetrics, AuditLog, AuditActionType } from '@/lib/domain/types'
+import type { AuditLogFilters } from '@/lib/domain/repository'
 import { 
   getProductRepository, 
   getStockRepository, 
   getOrderRepository, 
   getDepoRepository,
-  getMetricsRepository
+  getMetricsRepository,
+  getAuditLogRepository
 } from '@/lib/data'
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetrics> {
@@ -66,4 +68,15 @@ export async function executeRawGraphQL(query: string): Promise<unknown> {
   return graphqlClient.request(query)
 }
 
-export type { Product, DepotStock, Order, Depo, DashboardMetrics }
+export async function createAuditLog(
+  entry: Omit<AuditLog, 'id' | 'createdAt'>
+): Promise<AuditLog> {
+  return getAuditLogRepository().create(entry)
+}
+
+export async function fetchAuditLogs(filters?: AuditLogFilters): Promise<AuditLog[]> {
+  return getAuditLogRepository().fetchAll(filters)
+}
+
+export type { Product, DepotStock, Order, Depo, DashboardMetrics, AuditLog, AuditActionType }
+export type { AuditLogFilters }

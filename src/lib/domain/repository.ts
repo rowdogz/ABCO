@@ -5,7 +5,9 @@ import type {
   Depo, 
   StockCheck, 
   StockCheckLine,
-  DashboardMetrics 
+  DashboardMetrics,
+  AuditLog,
+  AuditActionType
 } from './types'
 
 export interface ProductRepository {
@@ -45,6 +47,17 @@ export interface MetricsRepository {
   fetchDashboardMetrics(): Promise<DashboardMetrics>
 }
 
+export interface AuditLogFilters {
+  actionType?: AuditActionType
+  startDate?: Date
+  endDate?: Date
+}
+
+export interface AuditLogRepository {
+  create(entry: Omit<AuditLog, 'id' | 'createdAt'>): Promise<AuditLog>
+  fetchAll(filters?: AuditLogFilters): Promise<AuditLog[]>
+}
+
 export interface DataRepositories {
   products: ProductRepository
   stock: StockRepository
@@ -52,4 +65,5 @@ export interface DataRepositories {
   depos: DepoRepository
   stockChecks: StockCheckRepository
   metrics: MetricsRepository
+  auditLogs: AuditLogRepository
 }

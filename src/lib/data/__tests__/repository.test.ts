@@ -18,6 +18,7 @@ describe('Repository Factory', () => {
       expect(repos.orders).toBeDefined()
       expect(repos.depos).toBeDefined()
       expect(repos.metrics).toBeDefined()
+      expect(repos.auditLogs).toBeDefined()
     })
 
     it('mock ProductRepository.fetchAll returns products', async () => {
@@ -165,6 +166,34 @@ describe('Repository Factory', () => {
       const { getMetricsRepository } = await import('../index')
       
       await expect(getMetricsRepository().fetchDashboardMetrics()).rejects.toThrow(
+        'Profit4 GraphQL backend is not configured'
+      )
+    })
+
+    it('Profit4AuditLogRepository.create throws not configured error', async () => {
+      vi.stubEnv('DATA_BACKEND', 'profit4')
+      
+      const { getAuditLogRepository } = await import('../index')
+      
+      await expect(getAuditLogRepository().create({
+        actorUserId: 'test-user',
+        actorRole: 'ops',
+        actionType: 'PRICE_APPROVED',
+        entityType: 'Product',
+        entityId: 'test-product',
+        oldValue: null,
+        newValue: null
+      })).rejects.toThrow(
+        'Profit4 GraphQL backend is not configured'
+      )
+    })
+
+    it('Profit4AuditLogRepository.fetchAll throws not configured error', async () => {
+      vi.stubEnv('DATA_BACKEND', 'profit4')
+      
+      const { getAuditLogRepository } = await import('../index')
+      
+      await expect(getAuditLogRepository().fetchAll()).rejects.toThrow(
         'Profit4 GraphQL backend is not configured'
       )
     })
