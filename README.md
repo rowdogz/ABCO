@@ -205,32 +205,92 @@ To test GraphQL connectivity:
 
 **Important**: This application requires PostgreSQL. SQLite is not supported.
 
-For deployment platforms like Vercel (which have ephemeral filesystems), you must use a hosted PostgreSQL service:
-- [Neon](https://neon.tech) - Serverless Postgres with generous free tier
+For deployment platforms like Vercel (which have ephemeral filesystems), you must use a hosted PostgreSQL service. We recommend **Neon** for its serverless architecture and Vercel integration.
+
+### Vercel + Neon Deployment (Recommended)
+
+#### Step 1: Create a Neon Database
+
+1. Sign up at [neon.tech](https://neon.tech)
+2. Create a new project (e.g., "abco-staging")
+3. Copy the connection string from the dashboard (looks like `postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`)
+
+#### Step 2: Deploy to Vercel
+
+1. Push your code to GitHub
+2. Go to [vercel.com](https://vercel.com) and import the repository
+3. Configure environment variables in Vercel dashboard:
+
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `DATABASE_URL` | `postgresql://...@neon.tech/...?sslmode=require` | From Neon dashboard |
+| `NEXTAUTH_SECRET` | `<random-32-char-string>` | Generate with `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | `https://your-app.vercel.app` | Your Vercel deployment URL |
+| `DATA_BACKEND` | `mock` | Use `mock` for staging, `profit4` when ready |
+
+4. Deploy the application
+
+#### Step 3: Run Database Migrations
+
+After the first deploy, you need to run migrations and seed the database. You can do this locally:
+
+```bash
+# Set DATABASE_URL to your Neon connection string
+export DATABASE_URL="postgresql://...@neon.tech/...?sslmode=require"
+
+# Run migrations
+npx prisma migrate deploy
+
+# Seed demo users (idempotent - safe to run multiple times)
+npm run db:seed
+```
+
+Or use Vercel CLI:
+```bash
+vercel env pull .env.local
+npx prisma migrate deploy
+npm run db:seed
+```
+
+#### Step 4: Verify Deployment
+
+1. Visit your deployed URL
+2. Check `/health` page to verify:
+   - Database connectivity shows "OK"
+   - DATA_BACKEND shows "mock"
+   - Git SHA is displayed
+3. Login with demo accounts to verify authentication works
+
+### Health Check Endpoint
+
+The app includes a health check page and API:
+
+- **Page**: `/health` - Visual health status (public)
+- **API**: `/api/health` - JSON health status for monitoring
+
+Returns:
+- App version (Git SHA)
+- Database connectivity (ok/fail)
+- DATA_BACKEND value
+- Environment (development/production)
+
+### Alternative Hosted PostgreSQL Providers
+
+If Neon doesn't suit your needs:
 - [Supabase](https://supabase.com) - Postgres with additional features
 - [Railway](https://railway.app) - Simple Postgres hosting
-- [PlanetScale](https://planetscale.com) - MySQL-compatible (would require schema changes)
-
-### Vercel Deployment
-
-1. Set up a hosted PostgreSQL database (e.g., Neon)
-2. Push your code to GitHub
-3. Import the repository in Vercel
-4. Configure environment variables in Vercel dashboard:
-   - `DATABASE_URL`: Your hosted PostgreSQL connection string
-   - `NEXTAUTH_SECRET`: A secure random string (generate with `openssl rand -base64 32`)
-   - `NEXTAUTH_URL`: Your production URL
-   - `DATA_BACKEND`: `mock` (or `profit4` when ready)
-5. Deploy
-6. Run migrations: `npx prisma migrate deploy` (or use Vercel's build command)
+- [Render](https://render.com) - Managed Postgres
 
 ### Production Checklist
 
-- [ ] Use a hosted PostgreSQL database
+- [ ] Use a hosted PostgreSQL database (Neon recommended)
 - [ ] Set a strong `NEXTAUTH_SECRET`
-- [ ] Change demo user passwords or disable demo accounts
+- [ ] Run `npx prisma migrate deploy` after first deploy
+- [ ] Run `npm run db:seed` to create demo users
+- [ ] Verify `/health` shows database connectivity OK
+- [ ] Change demo user passwords or disable demo accounts for production
 - [ ] Configure proper CORS and security headers
-- [ ] Set up database backups
+- [ ] Set up database backups (Neon has automatic backups)
 
 ## Running Tests
 
@@ -238,7 +298,7 @@ For deployment platforms like Vercel (which have ephemeral filesystems), you mus
 npm run test
 ```
 
-Tests use the mock data layer and do not require a database connection. All 33 tests should pass.
+Tests use the mock data layer and do not require a database connection. All 35 tests should pass.
 
 ## License
 
