@@ -14,7 +14,7 @@ async function checkDatabaseConnection(): Promise<{ ok: boolean; error?: string 
 
 export default async function HealthPage() {
   const dbStatus = await checkDatabaseConnection()
-  const gitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown'
+  const gitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || 'unknown'
   const dataBackend = process.env.DATA_BACKEND || 'mock'
   const nodeEnv = process.env.NODE_ENV || 'development'
 
