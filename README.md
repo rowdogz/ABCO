@@ -78,13 +78,24 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | SQLite database connection string | Yes |
-| `NEXTAUTH_SECRET` | Secret for NextAuth session encryption | Yes |
-| `NEXTAUTH_URL` | Application URL | Yes |
-| `PROFIT4_GRAPHQL_URL` | Profit4 GraphQL endpoint URL | Yes |
-| `PROFIT4_API_KEY` | API key for Profit4 authentication | No |
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | SQLite database connection string | Yes | `file:./dev.db` |
+| `NEXTAUTH_SECRET` | Secret for NextAuth session encryption | Yes | - |
+| `NEXTAUTH_URL` | Application URL | Yes | `http://localhost:3000` |
+| `DATA_BACKEND` | Data backend to use (`mock` or `profit4`) | No | `mock` |
+| `PROFIT4_GRAPHQL_URL` | Profit4 GraphQL endpoint URL | Yes | - |
+| `PROFIT4_API_KEY` | API key for Profit4 authentication | No | - |
+
+## Data Backend Configuration
+
+The application uses a repository pattern with swappable backends controlled by the `DATA_BACKEND` environment variable:
+
+**`DATA_BACKEND=mock`** (default): Uses mock data for development. All product, stock, and order data comes from in-memory mock data. This is useful for local development and testing without requiring access to the Profit4 GraphQL endpoint.
+
+**`DATA_BACKEND=profit4`**: Uses the real Profit4 GraphQL endpoint. Requires `PROFIT4_GRAPHQL_URL` and optionally `PROFIT4_API_KEY` to be configured. Currently throws "not configured" errors as the GraphQL queries need to be implemented once endpoint access is available.
+
+The repository boundary is enforced by ESLint rules that prevent direct imports from `@/lib/data/mock` or `@/lib/data/profit4` in application code. All data access must go through the repository factory (`@/lib/data`) or domain types (`@/lib/domain/types`).
 
 ## Project Structure
 
@@ -100,11 +111,17 @@ src/
 │   ├── products/           # Product search & detail
 │   └── stock-check/        # Stock check management
 ├── components/             # React components
-├── lib/                    # Utilities and services
+├── lib/
+│   ├── data/               # Repository implementations
+│   │   ├── mock/           # Mock data implementations
+│   │   ├── profit4/        # Profit4 GraphQL implementations
+│   │   └── index.ts        # Repository factory
+│   ├── domain/             # Domain types and interfaces
+│   │   ├── types.ts        # Zod schemas and types
+│   │   └── repository.ts   # Repository interfaces
 │   ├── auth.ts             # NextAuth configuration
-│   ├── data-service.ts     # Data fetching layer
+│   ├── data-service.ts     # Data fetching layer (uses repositories)
 │   ├── graphql-client.ts   # GraphQL client setup
-│   ├── mock-data.ts        # Mock data for development
 │   └── prisma.ts           # Prisma client
 └── types/                  # TypeScript type definitions
 ```
