@@ -1,13 +1,24 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-async function seedUsers() {
+function validateSeedToken(request: NextRequest): boolean {
+  const seedToken = process.env.SEED_TOKEN
+  if (!seedToken) {
+    return false
+  }
+  
+  const providedToken = request.headers.get('x-seed-token')
+  return providedToken === seedToken
+}
+
+async function seedUsers(): Promise<{ created: number; users: Array<{ email: string; role: string }> }> {
   const opsPasswordHash = await bcrypt.hash('password123', 10)
   const procurementPasswordHash = await bcrypt.hash('password123', 10)
 
+  let createdCount = 0
+
+  const existingOps = await prisma.user.findUnique({ where: { email: 'ops@abco.com' } })
   const opsUser = await prisma.user.upsert({
     where: { email: 'ops@abco.com' },
     update: {},
@@ -18,7 +29,9 @@ async function seedUsers() {
       name: 'ABCO Operations'
     }
   })
+  if (!existingOps) createdCount++
 
+  const existingProcurement = await prisma.user.findUnique({ where: { email: 'procurement@eurocell.com' } })
   const procurementUser = await prisma.user.upsert({
     where: { email: 'procurement@eurocell.com' },
     update: {},
@@ -29,59 +42,52 @@ async function seedUsers() {
       name: 'Eurocell Procurement'
     }
   })
+  if (!existingProcurement) createdCount++
 
-  return [opsUser, procurementUser]
+  return {
+    created: createdCount,
+    users: [
+      { email: opsUser.email, role: opsUser.role },
+      { email: procurementUser.email, role: procurementUser.role }
+    ]
+  }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const userCount = await prisma.user.count()
-    
-    if (userCount === 0) {
-      const users = await seedUsers()
-      return NextResponse.json({
-        success: true,
-        message: 'Database seeded successfully (first-time setup)',
-        users: users.map(u => ({ email: u.email, role: u.role }))
-      })
+    if (!validateSeedToken(request)) {
+      return NextResponse.json({ 
+        error: 'Unauthorized - invalid or missing SEED_TOKEN' 
+      }, { status: 401 })
     }
 
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized - users already exist, login required' }, { status: 401 })
-    }
-
-    if (session.user.role !== 'ops') {
-      return NextResponse.json({ error: 'Forbidden - ops role required' }, { status: 403 })
-    }
-
-    const users = await seedUsers()
+    const result = await seedUsers()
 
     return NextResponse.json({
-      success: true,
-      message: 'Database seeded successfully',
-      users: users.map(u => ({ email: u.email, role: u.role }))
+      seeded: true,
+      users_created: result.created,
+      message: result.created > 0 
+        ? `Database seeded successfully. Created ${result.created} user(s).`
+        : 'Database already seeded. No new users created.',
+      users: result.users
     })
   } catch (error) {
     console.error('Error seeding database:', error)
     return NextResponse.json({ 
-      error: 'Failed to seed database',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      seeded: false,
+      users_created: 0,
+      message: 'Failed to seed database',
+      error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    if (session.user.role !== 'ops') {
-      return NextResponse.json({ error: 'Forbidden - ops role required' }, { status: 403 })
+    if (!validateSeedToken(request)) {
+      return NextResponse.json({ 
+        error: 'Unauthorized - invalid or missing SEED_TOKEN' 
+      }, { status: 401 })
     }
 
     const userCount = await prisma.user.count()
@@ -91,7 +97,7 @@ export async function GET() {
 
     return NextResponse.json({
       seeded: userCount > 0,
-      userCount,
+      user_count: userCount,
       users
     })
   } catch (error) {

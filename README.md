@@ -126,6 +126,7 @@ docker compose down -v
 | `NEXTAUTH_SECRET` | Secret for NextAuth session encryption | Yes | - |
 | `NEXTAUTH_URL` | Application URL | Yes | `http://localhost:3000` |
 | `DATA_BACKEND` | Data backend to use (`mock` or `profit4`) | No | `mock` |
+| `SEED_TOKEN` | Secret token for `/api/admin/seed` endpoint | Yes (for seeding) | - |
 | `PROFIT4_GRAPHQL_URL` | Profit4 GraphQL endpoint URL | Yes | - |
 | `PROFIT4_API_KEY` | API key for Profit4 authentication | No | - |
 
@@ -307,23 +308,25 @@ Railway offers a simple deployment experience with built-in PostgreSQL. Follow t
 | `NEXTAUTH_SECRET` | Generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | `https://your-app.up.railway.app` (get from Deployments tab) |
 | `DATA_BACKEND` | `mock` |
+| `SEED_TOKEN` | Generate with `openssl rand -base64 32` |
 
 4. Click **"Deploy"** to redeploy with new variables
 
 #### Step 4: Seed the Database
 
-After the first successful deployment, seed the demo users using the `/api/admin/seed` endpoint:
+After the first successful deployment, seed the demo users using the `/api/admin/seed` endpoint. This endpoint requires the `SEED_TOKEN` for security:
 
 ```bash
-# First-time seed (no authentication required when database is empty)
-curl -X POST https://your-app.up.railway.app/api/admin/seed
+# Seed the database (requires SEED_TOKEN header)
+curl -X POST https://your-app.up.railway.app/api/admin/seed \
+  -H "x-seed-token: YOUR_SEED_TOKEN_VALUE"
 ```
 
 This creates the demo users:
 - `ops@abco.com` (password: `password123`)
 - `procurement@eurocell.com` (password: `password123`)
 
-The seed endpoint is idempotent and safe to run multiple times. After users exist, it requires ops authentication.
+The seed endpoint is idempotent and safe to run multiple times. It returns a JSON response indicating how many users were created.
 
 #### Step 5: Verify Deployment
 
@@ -350,7 +353,8 @@ The app includes a `railway.json` configuration file that:
 - View logs in Railway dashboard for connection errors
 
 **Seed endpoint returns 401:**
-- The database already has users; login as ops user first
+- Verify `SEED_TOKEN` env var is set in Railway
+- Ensure the `x-seed-token` header matches the `SEED_TOKEN` value exactly
 - Or use Railway's shell to run `npm run db:seed` directly
 
 **Build fails:**
