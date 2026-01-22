@@ -10,7 +10,11 @@
       "test": "vitest run",
       "test:watch": "vitest",
       "postinstall": "prisma generate",
-      "db:seed": "npx tsx prisma/seed.ts"
+      "db:migrate": "prisma migrate dev",
+      "db:migrate:deploy": "prisma migrate deploy",
+      "db:seed": "npx tsx prisma/seed.ts",
+      "db:reset": "prisma migrate reset --force",
+      "db:studio": "prisma studio"
     },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -16,7 +16,7 @@ A web application for ABCO and customer procurement users (e.g., Eurocell) to ma
 - **Framework**: Next.js 14+ (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: SQLite with Prisma ORM
+- **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: NextAuth.js with credentials provider
 - **GraphQL Client**: graphql-request
 
@@ -26,6 +26,7 @@ A web application for ABCO and customer procurement users (e.g., Eurocell) to ma
 
 - Node.js 18+
 - npm
+- Docker and Docker Compose (for PostgreSQL)
 
 ### Setup
 
@@ -35,39 +36,80 @@ git clone https://github.com/rowdogz/ABCO.git
 cd ABCO
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
+2. Create a `.env` file with your database credentials:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and configure:
-- `DATABASE_URL`: SQLite database path (default: `file:./dev.db`)
-- `NEXTAUTH_SECRET`: A secure random string for session encryption
-- `NEXTAUTH_URL`: Your app URL (default: `http://localhost:3000`)
-- `PROFIT4_GRAPHQL_URL`: Profit4 GraphQL endpoint
-- `PROFIT4_API_KEY`: API key for Profit4 (if required)
-
-4. Initialize the database:
-```bash
-npx prisma migrate dev
+Edit `.env` and set the PostgreSQL credentials (replace with your own values):
+```
+POSTGRES_USER=abco
+POSTGRES_PASSWORD=<your-local-dev-password>
+POSTGRES_DB=abco_dev
+DATABASE_URL="postgresql://abco:<your-local-dev-password>@localhost:5432/abco_dev"
+NEXTAUTH_SECRET="<generate-with-openssl-rand-base64-32>"
 ```
 
-5. Seed the database with demo users:
+3. Start PostgreSQL with Docker Compose:
+```bash
+docker compose up -d
+```
+
+This starts a PostgreSQL 16 container on `localhost:5432`.
+
+3. Install dependencies:
+```bash
+npm install
+```
+
+4. Set up environment variables:
+```bash
+cp .env.example .env
+```
+
+The default `.env` is pre-configured for the Docker Compose PostgreSQL instance. Edit if needed:
+- `DATABASE_URL`: PostgreSQL connection string
+- `NEXTAUTH_SECRET`: A secure random string for session encryption (change in production!)
+- `NEXTAUTH_URL`: Your app URL (default: `http://localhost:3000`)
+- `DATA_BACKEND`: Data backend to use (`mock` or `profit4`, default: `mock`)
+
+5. Run database migrations:
+```bash
+npm run db:migrate
+```
+
+6. Seed the database with demo users:
 ```bash
 npm run db:seed
 ```
 
-6. Start the development server:
+7. Start the development server:
 ```bash
 npm run dev
 ```
 
-7. Open [http://localhost:3000](http://localhost:3000) in your browser
+8. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Database Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run db:migrate` | Run Prisma migrations (development) |
+| `npm run db:migrate:deploy` | Deploy migrations (production) |
+| `npm run db:seed` | Seed database with demo users |
+| `npm run db:reset` | Reset database and re-run migrations |
+| `npm run db:studio` | Open Prisma Studio GUI |
+
+### Stopping the Database
+
+```bash
+docker compose down
+```
+
+To also remove the data volume:
+```bash
+docker compose down -v
+```
 
 ## Demo Accounts
 
@@ -80,7 +122,7 @@ npm run dev
 
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `DATABASE_URL` | SQLite database connection string | Yes | `file:./dev.db` |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | See `.env.example` |
 | `NEXTAUTH_SECRET` | Secret for NextAuth session encryption | Yes | - |
 | `NEXTAUTH_URL` | Application URL | Yes | `http://localhost:3000` |
 | `DATA_BACKEND` | Data backend to use (`mock` or `profit4`) | No | `mock` |
@@ -128,7 +170,7 @@ src/
 
 ## Database Schema
 
-The application uses SQLite with Prisma for app-owned data:
+The application uses PostgreSQL with Prisma for app-owned data:
 
 - **User**: Authentication and role management
 - **StockCheck**: Stock check entries by depot
@@ -159,14 +201,44 @@ To test GraphQL connectivity:
 
 ## Deployment
 
-### Vercel (Recommended)
+### Database Requirements
 
-1. Push your code to GitHub
-2. Import the repository in Vercel
-3. Configure environment variables in Vercel dashboard
-4. Deploy
+**Important**: This application requires PostgreSQL. SQLite is not supported.
 
-Note: For production, consider using PostgreSQL instead of SQLite.
+For deployment platforms like Vercel (which have ephemeral filesystems), you must use a hosted PostgreSQL service:
+- [Neon](https://neon.tech) - Serverless Postgres with generous free tier
+- [Supabase](https://supabase.com) - Postgres with additional features
+- [Railway](https://railway.app) - Simple Postgres hosting
+- [PlanetScale](https://planetscale.com) - MySQL-compatible (would require schema changes)
+
+### Vercel Deployment
+
+1. Set up a hosted PostgreSQL database (e.g., Neon)
+2. Push your code to GitHub
+3. Import the repository in Vercel
+4. Configure environment variables in Vercel dashboard:
+   - `DATABASE_URL`: Your hosted PostgreSQL connection string
+   - `NEXTAUTH_SECRET`: A secure random string (generate with `openssl rand -base64 32`)
+   - `NEXTAUTH_URL`: Your production URL
+   - `DATA_BACKEND`: `mock` (or `profit4` when ready)
+5. Deploy
+6. Run migrations: `npx prisma migrate deploy` (or use Vercel's build command)
+
+### Production Checklist
+
+- [ ] Use a hosted PostgreSQL database
+- [ ] Set a strong `NEXTAUTH_SECRET`
+- [ ] Change demo user passwords or disable demo accounts
+- [ ] Configure proper CORS and security headers
+- [ ] Set up database backups
+
+## Running Tests
+
+```bash
+npm run test
+```
+
+Tests use the mock data layer and do not require a database connection. All 33 tests should pass.
 
 ## License
 
