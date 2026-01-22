@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { useState, useEffect } from 'react'
 import { ClipboardList, Plus, Calendar, MapPin, Trash2, Save, AlertCircle } from 'lucide-react'
-import { Depo, Product } from '@/types/graphql'
+import type { Depo, Product } from '@/lib/domain/types'
 import { format } from 'date-fns'
 
 interface StockCheckLine {

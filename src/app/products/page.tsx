@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { useState, useEffect, Suspense } from 'react'
 import { Search, Package, AlertTriangle, ChevronRight } from 'lucide-react'
-import { Product } from '@/types/graphql'
+import type { Product } from '@/lib/domain/types'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 

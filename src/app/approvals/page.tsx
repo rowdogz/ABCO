@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { useState, useEffect } from 'react'
 import { Check, X, Clock, AlertCircle } from 'lucide-react'
-import { Product } from '@/types/graphql'
+import type { Product } from '@/lib/domain/types'
 import { format } from 'date-fns'
 
 export default function ApprovalsPage() {

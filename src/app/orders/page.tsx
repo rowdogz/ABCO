@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { useState, useEffect } from 'react'
 import { ShoppingCart, Calendar, MapPin, ChevronDown, ChevronUp, Package } from 'lucide-react'
-import { Order, Depo } from '@/types/graphql'
+import type { Order, Depo } from '@/lib/domain/types'
 import { format } from 'date-fns'
 
 export default function OrdersPage() {
