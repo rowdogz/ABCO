@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { NextRequest } from 'next/server'
 
 describe('Seed Endpoint Token Validation', () => {
   beforeEach(() => {
@@ -11,13 +12,12 @@ describe('Seed Endpoint Token Validation', () => {
     
     const { POST } = await import('../route')
     
-    const mockRequest = {
-      headers: new Headers({
-        'x-seed-token': 'some-token'
-      })
-    } as unknown as Request
+    const mockRequest = new NextRequest('http://localhost/api/admin/seed', {
+      method: 'POST',
+      headers: { 'x-seed-token': 'some-token' }
+    })
     
-    const response = await POST(mockRequest as any)
+    const response = await POST(mockRequest)
     const data = await response.json()
     
     expect(response.status).toBe(401)
@@ -29,11 +29,11 @@ describe('Seed Endpoint Token Validation', () => {
     
     const { POST } = await import('../route')
     
-    const mockRequest = {
-      headers: new Headers({})
-    } as unknown as Request
+    const mockRequest = new NextRequest('http://localhost/api/admin/seed', {
+      method: 'POST'
+    })
     
-    const response = await POST(mockRequest as any)
+    const response = await POST(mockRequest)
     const data = await response.json()
     
     expect(response.status).toBe(401)
@@ -45,13 +45,12 @@ describe('Seed Endpoint Token Validation', () => {
     
     const { POST } = await import('../route')
     
-    const mockRequest = {
-      headers: new Headers({
-        'x-seed-token': 'wrong-token'
-      })
-    } as unknown as Request
+    const mockRequest = new NextRequest('http://localhost/api/admin/seed', {
+      method: 'POST',
+      headers: { 'x-seed-token': 'wrong-token' }
+    })
     
-    const response = await POST(mockRequest as any)
+    const response = await POST(mockRequest)
     const data = await response.json()
     
     expect(response.status).toBe(401)
@@ -63,13 +62,12 @@ describe('Seed Endpoint Token Validation', () => {
     
     const { GET } = await import('../route')
     
-    const mockRequest = {
-      headers: new Headers({
-        'x-seed-token': 'wrong-token'
-      })
-    } as unknown as Request
+    const mockRequest = new NextRequest('http://localhost/api/admin/seed', {
+      method: 'GET',
+      headers: { 'x-seed-token': 'wrong-token' }
+    })
     
-    const response = await GET(mockRequest as any)
+    const response = await GET(mockRequest)
     const data = await response.json()
     
     expect(response.status).toBe(401)
