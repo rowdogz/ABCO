@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  role         String       @default("ops") // ops, procurement
+  name         String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  stockChecks  StockCheck[]
+}
+
+model StockCheck {
+  id        String           @id @default(cuid())
+  depoId    String
+  createdBy String
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [createdBy], references: [id])
+  lines     StockCheckLine[]
+}
+
+model StockCheckLine {
+  id               String     @id @default(cuid())
+  stockCheckId     String
+  productId        String
+  productName      String?
+  expectedQty      Int
+  countedQty       Int
+  unitCostSnapshot Float
+  stockCheck       StockCheck @relation(fields: [stockCheckId], references: [id], onDelete: Cascade)
+}
