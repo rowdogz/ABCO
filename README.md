@@ -24,7 +24,7 @@ A web application for ABCO and customer procurement users (e.g., Eurocell) to ma
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (required by Next.js 16)
 - npm
 - Docker and Docker Compose (for PostgreSQL)
 
