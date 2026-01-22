@@ -20,7 +20,7 @@ import {
   validateDepos,
   validateDashboardMetrics
 } from '@/lib/domain/types'
-import { mockProducts, mockStockLevels, mockOrders, mockDepos } from './data'
+import { mockProducts, mockStockLevels, mockOrders, mockDepos, mockStockChecks } from './data'
 
 const productState = [...mockProducts]
 
@@ -89,7 +89,9 @@ export class MockStockRepository implements StockRepository {
   }
 
   async fetchLowStockAlerts(): Promise<DepotStock[]> {
-    const lowStock = mockStockLevels.filter(s => s.quantity < s.minStock)
+    const lowStock = mockStockLevels.filter(s => 
+      s.minStock !== undefined && s.quantity < s.minStock
+    )
     return validateDepotStocks(lowStock)
   }
 }
@@ -120,13 +122,22 @@ export class MockDepoRepository implements DepoRepository {
 export class MockMetricsRepository implements MetricsRepository {
   async fetchDashboardMetrics(): Promise<DashboardMetrics> {
     const pendingProducts = productState.filter(p => p.priceApprovalStatus === 'Pending')
-    const lowStockItems = mockStockLevels.filter(s => s.quantity < s.minStock)
+    const lowStockItems = mockStockLevels.filter(s => 
+      s.minStock !== undefined && s.quantity < s.minStock
+    )
+    
+    const varianceCost = mockStockChecks.reduce((total, check) => {
+      return total + check.lines.reduce((checkTotal, line) => {
+        const missing = line.expectedQty - line.countedQty
+        return checkTotal + (missing > 0 ? missing * line.unitCost : 0)
+      }, 0)
+    }, 0)
     
     const metrics = {
       pendingPriceApprovals: pendingProducts.length,
       lowStockAlerts: lowStockItems.length,
       outstandingOrdersCount: mockOrders.length,
-      stockCheckVarianceCost: 1250.75
+      stockCheckVarianceCost: Math.round(varianceCost * 100) / 100
     }
     
     return validateDashboardMetrics(metrics)

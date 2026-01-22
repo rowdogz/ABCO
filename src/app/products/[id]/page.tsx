@@ -96,10 +96,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                     </div>
                   </div>
                 )}
-                <div>
-                  <p className="text-sm text-slate-500">Unit Cost</p>
-                  <p className="text-xl font-bold text-slate-900">£{product.unitCost.toFixed(2)}</p>
-                </div>
+                {product.unitCost !== undefined && (
+                  <div>
+                    <p className="text-sm text-slate-500">Unit Cost</p>
+                    <p className="text-xl font-bold text-slate-900">£{product.unitCost.toFixed(2)}</p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-slate-500">Last Updated</p>
                   <div className="flex items-center text-slate-700">
@@ -124,9 +126,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <p className="text-slate-500 text-center py-4">No stock data available</p>
               ) : (
                 <div className="space-y-3">
-                  {stockLevels.map((stock, index) => {
-                    const isLowStock = stock.quantity < stock.minStock
-                    const stockPercentage = Math.min((stock.quantity / stock.maxStock) * 100, 100)
+                    {stockLevels.map((stock, index) => {
+                      const isLowStock = stock.minStock !== undefined && stock.quantity < stock.minStock
+                      const stockPercentage = stock.maxStock ? Math.min((stock.quantity / stock.maxStock) * 100, 100) : 50
                     
                     return (
                       <div key={index} className={`p-4 rounded-lg ${isLowStock ? 'bg-red-50' : 'bg-slate-50'}`}>
@@ -152,8 +154,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                           />
                         </div>
                         <div className="flex justify-between text-xs text-slate-500 mt-1">
-                          <span>Min: {stock.minStock}</span>
-                          <span>Max: {stock.maxStock}</span>
+                          <span>Min: {stock.minStock ?? 'N/A'}</span>
+                          <span>Max: {stock.maxStock ?? 'N/A'}</span>
                         </div>
                       </div>
                     )

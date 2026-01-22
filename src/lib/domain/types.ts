@@ -20,8 +20,13 @@ export const ProductSchema = z.object({
   depos: z.array(z.string()),
   minStock: z.number().optional(),
   maxStock: z.number().optional(),
-  unitCost: z.number(),
-  category: z.string().optional()
+  unitCost: z.number().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  binLocation: z.string().optional(),
+  discontinued: z.boolean().optional(),
+  approvedAt: z.string().optional(),
+  rejectedAt: z.string().optional()
 })
 
 export const DepotStockSchema = z.object({
@@ -31,8 +36,8 @@ export const DepotStockSchema = z.object({
   locationId: z.string().optional(),
   locationName: z.string().optional(),
   quantity: z.number(),
-  minStock: z.number(),
-  maxStock: z.number()
+  minStock: z.number().optional(),
+  maxStock: z.number().optional()
 })
 
 export const OrderLineItemSchema = z.object({
@@ -41,6 +46,7 @@ export const OrderLineItemSchema = z.object({
   productName: z.string(),
   sku: z.string(),
   quantity: z.number(),
+  receivedQty: z.number().optional(),
   unitPrice: z.number()
 })
 
