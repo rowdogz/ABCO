@@ -274,11 +274,95 @@ Returns:
 - DATA_BACKEND value
 - Environment (development/production)
 
+### Deploy to Railway (Free Tier)
+
+Railway offers a simple deployment experience with built-in PostgreSQL. Follow these steps:
+
+#### Step 1: Create a Railway Project
+
+1. Go to [railway.app](https://railway.app) and sign up/login
+2. Click **"New Project"** from the dashboard
+3. Select **"Deploy from GitHub repo"**
+4. Connect your GitHub account if not already connected
+5. Select the **rowdogz/ABCO** repository
+6. Railway will detect the Next.js app and start building
+
+#### Step 2: Add PostgreSQL Database
+
+1. In your Railway project, click **"+ New"** in the top right
+2. Select **"Database"** → **"Add PostgreSQL"**
+3. Railway will provision a PostgreSQL instance
+4. Click on the PostgreSQL service to view connection details
+5. The `DATABASE_URL` is automatically available to your app
+
+#### Step 3: Configure Environment Variables
+
+1. Click on your app service (not the database)
+2. Go to the **"Variables"** tab
+3. Add the following variables:
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway reference variable) |
+| `NEXTAUTH_SECRET` | Generate with `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | `https://your-app.up.railway.app` (get from Deployments tab) |
+| `DATA_BACKEND` | `mock` |
+
+4. Click **"Deploy"** to redeploy with new variables
+
+#### Step 4: Seed the Database
+
+After the first successful deployment, seed the demo users using the `/api/admin/seed` endpoint:
+
+```bash
+# First-time seed (no authentication required when database is empty)
+curl -X POST https://your-app.up.railway.app/api/admin/seed
+```
+
+This creates the demo users:
+- `ops@abco.com` (password: `password123`)
+- `procurement@eurocell.com` (password: `password123`)
+
+The seed endpoint is idempotent and safe to run multiple times. After users exist, it requires ops authentication.
+
+#### Step 5: Verify Deployment
+
+1. Visit `https://your-app.up.railway.app/health` to check:
+   - Database connectivity shows **"OK"**
+   - DATA_BACKEND shows **"mock"**
+   - Git SHA is displayed
+2. Visit the login page and sign in with demo credentials
+3. Verify dashboard loads with mock data
+
+#### Railway Configuration
+
+The app includes a `railway.json` configuration file that:
+- Uses Nixpacks builder (auto-detected)
+- Runs `prisma migrate deploy` before starting the app
+- Configures health check at `/api/health`
+- Sets restart policy on failure
+
+#### Troubleshooting Railway
+
+**Database connection fails:**
+- Ensure `DATABASE_URL` references the Railway Postgres service
+- Check that the PostgreSQL service is running (green status)
+- View logs in Railway dashboard for connection errors
+
+**Seed endpoint returns 401:**
+- The database already has users; login as ops user first
+- Or use Railway's shell to run `npm run db:seed` directly
+
+**Build fails:**
+- Check build logs in Railway dashboard
+- Ensure all dependencies are in `package.json`
+- Verify Node.js version compatibility (18+)
+
 ### Alternative Hosted PostgreSQL Providers
 
-If Neon doesn't suit your needs:
+If Railway doesn't suit your needs:
+- [Neon](https://neon.tech) - Serverless Postgres with Vercel integration
 - [Supabase](https://supabase.com) - Postgres with additional features
-- [Railway](https://railway.app) - Simple Postgres hosting
 - [Render](https://render.com) - Managed Postgres
 
 ### Production Checklist
